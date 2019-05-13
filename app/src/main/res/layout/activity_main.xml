@@ -1,19 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<android.widget.LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MainActivity">
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:context=".MainActivity"
+>
 
-    <TextView
-            android:layout_width="wrap_content"
+    <android.widget.GridLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/gridLayout"
+            android:rowCount="8"
+            android:columnCount="8"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hello World!"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            android:padding="10dp"
+    >
 
-</android.support.constraint.ConstraintLayout>
+
+    </android.widget.GridLayout>
+
+    <android.widget.LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="vertical"
+            android:padding="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <Button
+                android:id="@+id/resign_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="resign"
+        />
+        <Button
+                android:id="@+id/offer_draw_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="offer draw"
+        />
+        <Button
+                android:id="@+id/print_board_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="print board"
+        />
+    </android.widget.LinearLayout>
+
+</android.widget.LinearLayout>
+
