@@ -225,7 +225,7 @@ class Board (val context: Context,
 
         return false
     }
-    fun promote(piece : Piece) : Unit {
+    fun promote(piece : Piece)  {
         var color = piece.color
         var col = piece.col
         var row = piece.row
@@ -305,9 +305,8 @@ class Board (val context: Context,
 
         return true
     }
-    fun loopBoard(playerTurn : String) : Unit {
+    fun loopBoard(playerTurn : String)  {
         var numberMoves = 0
-
         var king : King? = null
         if(playerTurn.equals("w")){
             king = wKing
@@ -352,8 +351,7 @@ class Board (val context: Context,
             }
         }
     }
-
-    fun displayMenu(title: String) : Unit{
+    fun displayMenu(title: String) {
         var builder : AlertDialog.Builder  = AlertDialog.Builder(context)
         builder.setTitle(title)
         var linearLayout = LinearLayout(context)
@@ -375,6 +373,9 @@ class Board (val context: Context,
         })
         dialog.setCancelable(false)
         dialog.show()
+    }
+    fun toFENString(): String {
+        return ""
     }
 
     //set up squares

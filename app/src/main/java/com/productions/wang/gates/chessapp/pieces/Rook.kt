@@ -3,10 +3,11 @@ package com.productions.wang.gates.chessapp.pieces
 import com.productions.wang.gates.chessapp.Board
 import com.productions.wang.gates.chessapp.Square
 
-class Rook(col: Char, row: Int, color: String, board: Board, override var pieceType: String = "rook") : Piece(col, row, color, board){
+class Rook(col: Char, row: Int, color: String, board: Board, var moved : Boolean = false, override var pieceType: String = "rook") : Piece(col, row, color, board){
 
     override fun moveTo(col: Char, row: Int) : Unit {
         if(board.canMove(this, col,row)){
+            moved = true
             super.moveTo(col, row)
         }
     }

@@ -57,7 +57,7 @@ class Pawn(col: Char, row: Int, color: String, board: Board, override var pieceT
 
         //first move
         if(firstMove){
-            if(mBoard.get(col)!!.get(row+2*increment)!!.piece==null){
+            if(mBoard.get(col)!!.get(row+increment)!!.piece==null&& mBoard.get(col)!!.get(row+2*increment)!!.piece==null){
                 answer.add(mBoard.get(col)!!.get(row+2*increment))
             }
         }
