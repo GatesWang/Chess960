@@ -11,6 +11,8 @@ class Pawn(col: Char, row: Int, color: String, board: Board, override var pieceT
     override fun moveTo(col: Char, row: Int) : Unit{
         var mBoard  = board.mBoard
         if(board.canMove(this, col,row)){
+            //reset halfmoves
+            board.halfMove = -1
             //en passant
             var increment = 0
             if(color.equals("w")){
@@ -35,7 +37,9 @@ class Pawn(col: Char, row: Int, color: String, board: Board, override var pieceT
             //en passant capturing
             if(piece is Pawn && piece.enPassantCapturable == true){
                 mBoard.get(col)!!.get(row-increment).piece = null
-                mBoard.get(col)!!.get(row-increment).update()
+                var thread2  = (board.context as MainActivity).runOnUiThread {
+                    mBoard.get(col)!!.get(row-increment).update()
+                }
             }
 
             super.moveTo(col, row)

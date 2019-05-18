@@ -3,7 +3,6 @@ package com.productions.wang.gates.chessapp.pieces
 import android.util.Log
 import com.productions.wang.gates.chessapp.Board
 import com.productions.wang.gates.chessapp.Square
-import kotlin.math.absoluteValue
 
 class King(col: Char, row: Int, color: String, board: Board, var moved : Boolean = false, override var pieceType: String = "king") : Piece(col, row, color, board){
 
@@ -24,7 +23,6 @@ class King(col: Char, row: Int, color: String, board: Board, var moved : Boolean
                 var square = board.mBoard.get(this.col+3)!!.get(this.row)
                 var piece : Piece? = square.piece
                 if(piece is Rook){
-                    Log.d(">>>","ok")
                     piece.moveTo(col-1,row)
                     square.update()
                     board.mBoard.get(col-1)!!.get(row).update()
@@ -33,7 +31,6 @@ class King(col: Char, row: Int, color: String, board: Board, var moved : Boolean
             super.moveTo(col, row)
         }
     }
-
     override fun getMoveToSquares() : ArrayList<Square>{
         val mBoard  = board.mBoard
         val answer = ArrayList<Square>()
@@ -54,46 +51,60 @@ class King(col: Char, row: Int, color: String, board: Board, var moved : Boolean
         }
 
         //castling
-        if(!moved && !board.isChecked(color)){
-            var piece : Piece? = mBoard.get(this.col-4)!!.get(this.row).piece
-            var canMove = (piece is Rook && piece.moved==false)
-            if(canMove){
-                for(i in 1..4){
-                    var square : Square =  mBoard.get(this.col-i)!!.get(this.row)
-                    if(i!=4 && square.piece != null){//if it is not empty or enemy territory
-                        canMove = false
-                        break
-                    }
-                    if(!board.canMove(this,this.col-i, this.row)){
-                        canMove = false
-                        break
-                    }
-                }
-            }
-            if(canMove){
-                answer.add(mBoard.get(this.col-2)!!.get(this.row))
-            }
+        if(canCastleQueen()){
+            answer.add(board.mBoard.get(this.col-2)!!.get(this.row))
+        }
 
-            piece = mBoard.get(this.col+3)!!.get(this.row).piece
-            canMove = (piece is Rook && piece.moved==false)
-            if(piece is Rook && piece.moved==false){
-                for(i in 1..3){
-                    var square : Square =  mBoard.get(this.col+i)!!.get(this.row)
-                    if(i!=3 && square.piece != null){//if it is not empty or enemy territory
-                        canMove = false
-                        break
-                    }
-                    if(!board.canMove(this,this.col-i, this.row)){
-                        canMove = false
-                        break
-                    }
+        if(canCastleKing()){
+            answer.add(board.mBoard.get(this.col+2)!!.get(this.row))
+        }
+
+        return answer
+    }
+
+    fun canCastleQueen() : Boolean{
+        if(moved){
+            return false
+        }
+        val mBoard  = board.mBoard
+        var piece : Piece? = mBoard.get(this.col-4)!!.get(this.row).piece
+        var canMove = !board.isChecked(color) && piece is Rook && piece.moved==false
+        if(canMove){
+            for(i in 1..4){
+                var square : Square =  mBoard.get(this.col-i)!!.get(this.row)
+                if(i!=4 && square.piece != null){//if it is not empty or enemy territory
+                    canMove = false
+                    break
                 }
-            }
-            if(canMove){
-                answer.add(mBoard.get(this.col+2)!!.get(this.row))
+                if(!board.canMove(this,this.col-i, this.row)){
+                    canMove = false
+                    break
+                }
             }
         }
-        return answer
+        return canMove
+    }
+    fun canCastleKing() : Boolean{
+        if(moved){
+            return false
+        }
+        val mBoard  = board.mBoard
+        var piece = mBoard.get(this.col+3)!!.get(this.row).piece
+        var canMove = !board.isChecked(color) && piece is Rook && piece.moved==false
+        if(piece is Rook && piece.moved==false){
+            for(i in 1..3){
+                var square : Square =  mBoard.get(this.col+i)!!.get(this.row)
+                if(i!=3 && square.piece != null){//if it is not empty or enemy territory
+                    canMove = false
+                    break
+                }
+                if(!board.canMove(this,this.col-i, this.row)){
+                    canMove = false
+                    break
+                }
+            }
+        }
+        return canMove
     }
 }
 

@@ -10,14 +10,13 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import com.productions.wang.gates.chessapp.pieces.*;
+import tui.Main
 import kotlin.math.absoluteValue
-import android.app.Activity
-
-
 
 
 class Board (val context: Context,
-             var setUp : Boolean) {
+             var setUp : Boolean,
+             var againstAI : Boolean) {
 
     val mBoard: HashMap<Char, MutableList<Square>> = HashMap()
     fun printBoard(): Unit {
@@ -35,6 +34,13 @@ class Board (val context: Context,
 
     var wKing : King? = null
     var bKing : King? = null
+    var wqueenRook : Rook? = null
+    var wkingRook : Rook? = null
+    var bqueenRook : Rook? = null
+    var bkingRook : Rook? = null
+
+    var halfMove = 0 //number of half moves since last capture or pawn advance
+    var fullMove = 1
 
     fun isChecked(color: String): Boolean {
         var king : King?
@@ -288,7 +294,6 @@ class Board (val context: Context,
 
         //check for checks
         if(isChecked(piece.color)){
-            Log.d(">>>", "illegal move, king is checked")
             //move back
             piece.row = tempRow
             piece.col = tempCol
@@ -305,7 +310,11 @@ class Board (val context: Context,
 
         return true
     }
-    fun loopBoard(playerTurn : String)  {
+    fun loopBoard(playerTurn : String) : Boolean {
+        halfMove++
+        if(playerTurn.equals("w")){
+            fullMove++
+        }
         var numberMoves = 0
         var king : King? = null
         if(playerTurn.equals("w")){
@@ -321,8 +330,10 @@ class Board (val context: Context,
                 if(piece!=null){
                     if(piece is Pawn){
                         //reset en passant
-                        if(piece.color.equals(playerTurn) && piece.enPassantCapturable){
-                            piece.enPassantCapturable = false
+                        if(piece.enPassantCapturable){
+                            if(piece.color.equals(playerTurn)){
+                                piece.enPassantCapturable = false
+                            }
                         }
                     }
                     if(playerTurn.equals(piece.color)){
@@ -335,6 +346,8 @@ class Board (val context: Context,
                 }
             }
         }
+        Log.d(">>>", "$playerTurn $numberMoves")
+
         if(numberMoves==0){
             if(isChecked(playerTurn)){
                 var winner = ""
@@ -349,33 +362,159 @@ class Board (val context: Context,
             else{
                 displayMenu("draw by stalemate")
             }
+            return false
         }
+        return true
     }
     fun displayMenu(title: String) {
-        var builder : AlertDialog.Builder  = AlertDialog.Builder(context)
-        builder.setTitle(title)
-        var linearLayout = LinearLayout(context)
-        linearLayout.layoutParams = ViewGroup.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        linearLayout.orientation = LinearLayout.VERTICAL
+        var thread2  = (context as MainActivity).runOnUiThread {
+            var builder : AlertDialog.Builder  = AlertDialog.Builder(context)
+            builder.setTitle(title)
+            var linearLayout = LinearLayout(context)
+            linearLayout.layoutParams = ViewGroup.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            linearLayout.orientation = LinearLayout.VERTICAL
 
-        var playAgainButton = Button(context)
-        playAgainButton.text =  "Play again"
-        linearLayout.addView(playAgainButton)
-        builder.setView(linearLayout)
-        var dialog = builder.create()
+            var playAgainButton = Button(context)
+            playAgainButton.text =  "Play again"
+            linearLayout.addView(playAgainButton)
+            builder.setView(linearLayout)
+            var dialog = builder.create()
 
-        playAgainButton.setOnClickListener(View.OnClickListener { v->
-            if (context is MainActivity) {
-                context.createBoard()
-                context.setUpPieces()
-                dialog.dismiss()
-            }
-        })
-        dialog.setCancelable(false)
-        dialog.show()
+            playAgainButton.setOnClickListener(View.OnClickListener { v->
+                if (context is MainActivity) {
+                    context.createBoard()
+                    context.setUpPieces()
+                    dialog.dismiss()
+                }
+            })
+            dialog.setCancelable(false)
+            dialog.show()
+        }
+
     }
-    fun toFENString(): String {
-        return ""
+    fun toFENString(playerTurn : String): String {
+        val RANK_SEPARATOR = "/"
+        //given board return FEN string representation
+        var fen = ""
+        for (rank in 7 downTo 0) {
+            // count empty fields
+            var empty = 0
+            // empty string for each rank
+            var rankFen = ""
+            for (file in 'a' .. 'h') {
+                if (mBoard.get(file)!!.get(rank).piece == null) {
+                    empty++
+                }
+                else {
+                    // add the number to the fen if not zero.
+                    if (empty != 0) {
+                        rankFen += empty
+                    }
+                    // add the letter to the fen
+                    rankFen += FENHelper(mBoard.get(file)!!.get(rank).piece!!)
+                    // reset the empty
+                    empty = 0
+                }
+            }
+            // add the number to the fen if not zero.
+            if (empty != 0) rankFen += empty
+            // add the rank to the fen
+            fen += rankFen
+            // add rank separator. If last then add a space
+            if (rank != 0) {
+                fen += RANK_SEPARATOR
+            }
+            else{
+                fen += " "
+            }
+        }
+        //turn
+        fen += playerTurn
+        fen += " "
+
+        //castle
+        var castleArr = arrayListOf<String>()
+        if(wKing!!.moved == false){
+            if(!wkingRook!!.moved){
+                castleArr.add("K")
+            }
+            if(!wqueenRook!!.moved){
+                castleArr.add("Q")
+            }
+        }
+        if(bKing!!.moved == false){
+            if(!bkingRook!!.moved){
+                castleArr.add("k")
+            }
+            if(!bqueenRook!!.moved){
+                castleArr.add("q")
+            }
+        }
+        for(castle in castleArr){
+            fen += castle
+        }
+        if(castleArr.size == 0){
+            fen += '-'
+        }
+        fen += " "
+
+        //en passant squares
+        var enpassantSquares = arrayListOf<String>()
+        for(i in 'a'..'h') {
+            for (j in 0..7) {
+                var piece = mBoard.get(i)!!.get(j).piece
+                if(piece is Pawn && piece.enPassantCapturable){
+                    var increment =  if(piece.color.equals("w")) -1 else 1
+                    enpassantSquares.add("" + piece.col + (piece.row+increment+1))
+                }
+            }
+        }
+        for(squareString in enpassantSquares){
+            fen += squareString
+        }
+        if(enpassantSquares.size == 0){
+            fen += '-'
+        }
+        fen += " "
+
+        //half moves
+        fen += halfMove
+        fen += " "
+        //full moves
+        fen += fullMove
+        fen += " "
+
+        return fen
+    }
+    fun FENHelper(piece: Piece) : String {
+        //given a piece return its fen representation
+        var answer = ""
+
+        when(piece.pieceType){
+            "knight" -> {
+                answer = "n"
+            }
+            "pawn" -> {
+                answer = "p"
+            }
+            "queen" -> {
+                answer = "q"
+            }
+            "bishop" -> {
+                answer = "b"
+            }
+            "rook" -> {
+                answer = "r"
+            }
+            "king" -> {
+                answer = "k"
+            }
+        }
+
+        if(piece.color.equals("w")){
+            answer = answer.toUpperCase()
+        }
+        return answer
     }
 
     //set up squares
@@ -473,17 +612,11 @@ class Board (val context: Context,
 
     //get king locations
     init{
-        //find position of kings
-        for(i in 'a'..'h') {
-            for (j in 0..7) {
-                var piece : Piece? = mBoard.get(i)?.get(j)?.piece
-                if(piece is King && piece.color.equals("w")){
-                    wKing = piece
-                }
-                else if(piece is King && piece.color.equals("b")){
-                    bKing = piece
-                }
-            }
-        }
+        wqueenRook = mBoard.get('a')!!.get(0).piece as Rook
+        wkingRook = mBoard.get('h')!!.get(0).piece as Rook
+        bqueenRook = mBoard.get('a')!!.get(0).piece as Rook
+        bkingRook = mBoard.get('h')!!.get(0).piece as Rook
+        wKing = mBoard.get('e')!!.get(0).piece as King
+        bKing = mBoard.get('e')!!.get(7).piece as King
     }
 }
